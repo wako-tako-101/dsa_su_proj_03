@@ -8,16 +8,16 @@ using namespace std;
 struct Student {
     vector<string> classes;
     string name;
-    int id, residence_hall;
+    int id, residence_id;
 };
 
 struct Edge {
-    int from, to, weight;
-    bool isOpen;
+    int to, weight;
+    bool isOpen = true;
 };
 
-struct Class {
-    string name, start, end;
+struct Class_Data {
+    string class_code, start, end;
     int location_id;
 };
 
@@ -27,7 +27,7 @@ private:
     // perhaps some graph representation?
     unordered_map<int, Student> students;
     unordered_map<int, vector<Edge>> adjList; //adj list of graph with: Connectedness = O(V) | Adjacency = O(V) | Space = O(V + E)
-    unordered_map<string, Class> classes; // maps class name to class details
+    unordered_map<string, Class_Data> classes; // maps class name to class details
 
 public:
     // Think about what helper functions you will need in the algorithm
@@ -36,8 +36,19 @@ public:
     bool ParseCommand(const string &command);
 
     //Graph public methods
-    bool insertStudent(const string &student_id, const string &class_id);
+    bool insertStudent(const string &name, int id, int residence_id, const vector<string> &class_names);
+    bool removeStudent(int id);
+    bool dropClass(int id, const string &class_code);
+    bool replaceClass(int id, const string &old_class_code, const string &new_class_code);
+    bool removeClass(const string &class_code);
+    bool toggleEdgesClosure();
+    string checkEdgeStatus(int location1, int location2);
+    bool isConnected(int location1, int location2);
 
     //Print public methods
+    void printShortestEdges(const int& student_id);
+    void printStudentZone(const int& student_id);
 
+    //Verification public methods
+    bool verifySchedule(const int& student_id);
 };
