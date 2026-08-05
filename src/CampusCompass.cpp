@@ -93,6 +93,55 @@ bool CampusCompass::ParseCommand(const string &command) {
 
     if(commandType == "insert") {
         // parse insert command
+        string name, idString, residenceString;
+        int numClasses;
+
+        size_t nameStart = command.find('"');
+
+        if(nameStart == string::npos) {
+            is_valid = false; // Invalid command format
+        } else {
+            size_t nameStart1 = nameStart + 1;
+            size_t nameEnd = command.find('"', nameStart + 1);
+
+            if(nameEnd == string::npos) {
+                is_valid = false; // Invalid command format
+            }
+
+            name = command.substr(nameStart, nameEnd - nameStart);
+            string remainingCommand = command.substr(nameEnd + 1);
+            stringstream ss(remainingCommand);
+
+            getline(ss, idString, ' ');
+            getline(ss, residenceString, ' ');
+            ss >> numClasses;
+
+            vector<string> classNames;
+            for(int i = 0; i < numClasses; ++i) {
+                string className;
+                ss >> className;
+                classNames.push_back(className);
+            }
+
+            if(classNames.size() != numClasses) {
+                is_valid = false; // Mismatch in number of classes
+            }
+
+            int id, residence_id;
+            try
+            {             
+                id = stoi(idString);
+                residence_id = stoi(residenceString);
+            }
+            catch(const std::exception& e)
+            {
+                is_valid = false; // Invalid ID or residence ID format
+            }
+
+            if(!insertStudent(name, id, residence_id, classNames)) {
+                is_valid = false; // Insertion failed
+            }
+        }
     } else if(commandType == "remove") {
         // parse remove command
     } else if(commandType == "dropClass") {
