@@ -377,7 +377,7 @@ bool CampusCompass::ParseCommand(const string &command)
     {
         id = stoi(idString);
     }
-    catch(...)
+    catch(const std::exception &e)
     {
         cout << "unsuccessful" << endl;
         return false;
@@ -799,7 +799,7 @@ void CampusCompass::printStudentZone(const int &student_id)
             classes[classCode].location_id;
 
         // If class is unreachable, skip
-        if (distances[classLocation] == INT_MAX)
+        if (distances[classLocation] == 99999999999)
         {
             continue;
         }
