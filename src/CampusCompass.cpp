@@ -3,6 +3,8 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <queue>
+#include <unordered_set>
 
 using namespace std;
 
@@ -319,17 +321,76 @@ bool CampusCompass::ParseCommand(const string &command)
         }
         cout << checkEdgeStatus(location1, location2) << endl;
     }
+
+    else if (commandType == "isConnected")
+    {
+        // parse isConnected command
+        int location1, location2;
+        ss >> location1 >> location2;
+
+        if (ss.fail())
+        {
+            cout << "unsuccessful" << endl;
+            is_valid = false;
+            return false;
+        }
+        cout << (isConnected(location1, location2) ? "yes" : "no") << endl;
+    }
+
     else if (commandType == "printShortestEdges")
     {
         // parse printShortestEdges command
+        int id;
+        ss >> id;
+
+        if (ss.fail())
+        {
+            cout << "unsuccessful" << endl;
+            is_valid = false;
+            return false;
+        }
+
+        printShortestEdges(id);
     }
     else if (commandType == "printStudentZone")
     {
         // parse printStudentZone command
+
     }
     else if (commandType == "verifySchedule")
     {
         // parse verifySchedule command
+    string idString;
+
+    ss >> idString;
+
+
+    if(ss.fail())
+    {
+        cout << "unsuccessful" << endl;
+        return false;
+    }
+
+    int id;
+
+    try
+    {
+        id = stoi(idString);
+    }
+    catch(...)
+    {
+        cout << "unsuccessful" << endl;
+        return false;
+    }
+
+    // Make sure student exists
+    if(students.find(id) == students.end())
+    {
+        cout << "unsuccessful" << endl;
+        return false;
+    }
+
+    printStudentZone(id);
     }
     else
     {
@@ -569,4 +630,235 @@ string CampusCompass::checkEdgeStatus(int location1, int location2)
     }
 
     return "DNE";
+}
+
+bool CampusCompass::isConnected(int location1, int location2)
+{
+    if (adjList.find(location1) == adjList.end() || adjList.find(location2) == adjList.end())
+    {
+        return false; // One or both locations don't exist in the graph
+    }
+
+    // BFS Traversal
+    queue<int> q;
+    unordered_set<int> visited;
+
+    q.push(location1);
+    visited.insert(location1);
+
+    while (!q.empty())
+    {
+        int current = q.front();
+        q.pop();
+
+        if (current == location2)
+        {
+            return true; // Found a path to location2
+        }
+
+        for (const Edge &edge : adjList[current])
+        {
+            if (!edge.isOpen)
+                continue; // Skip closed edges
+
+            if (visited.find(edge.to) != visited.end())
+                continue; // Skip already visited nodes
+
+            visited.insert(edge.to);
+            q.push(edge.to);
+        }
+    }
+
+    return false;
+}
+
+unordered_map<int, int> CampusCompass::dijkstra(int start, unordered_map<int, int> &parent)
+{
+    unordered_map<int, int> distance; // map to represent the shortest distance from the starting node to each node in the graph
+
+    // Initialize all distances
+    for (auto &node : adjList)
+    {
+        distance[node.first] = 99999999999;
+    }
+
+    // Distance to starting node
+    distance[start] = 0;
+
+    // pair = {distance, location}
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    pq.push({0, start});
+
+    while (!pq.empty())
+    {
+        int currentDist = pq.top().first;
+        int currentNode = pq.top().second;
+        pq.pop();
+
+        // Ignore outdated queue entries
+        if (currentDist > distance[currentNode])
+        {
+            continue;
+        }
+
+        for (const Edge &edge : adjList[currentNode])
+        {
+            // Ignore closed paths
+            if (!edge.isOpen)
+                continue;
+
+            int newDist = currentDist + edge.weight;
+            if (newDist < distance[edge.to]) // if the new distance is shorter than the previously recorded distance, update it
+            {
+                distance[edge.to] = newDist;
+                parent[edge.to] = currentNode; // update the parent of the node
+                pq.push({newDist, edge.to});
+            }
+        }
+    }
+    return distance;
+}
+
+vector<int> CampusCompass::getPath(int start, int end, const unordered_map<int, int> &parent)
+{
+    vector<int> path;
+    int current = end;
+
+    while (current != start)
+    {
+        path.push_back(current);
+        if (parent.find(current) == parent.end())
+        {
+            return {}; // return empty path if there is no path from start to end
+        }
+
+        current = parent.at(current);
+    }
+
+    path.push_back(start);
+    reverse(path.begin(), path.end());
+
+    return path;
+}
+
+void CampusCompass::printShortestEdges(const int &student_id)
+{
+    Student student = students[student_id];
+    unordered_map<int, int> parent;
+
+    cout << "Time For Shortest Edges: " << student.name << endl;
+    auto distances = dijkstraWithParent(student.residence_id, parent);
+
+    vector<string> sortedClasses = student.classes;
+    sort(sortedClasses.begin(), sortedClasses.end());
+
+    for (string classCode : sortedClasses)
+    {
+        int location = classes[classCode].location_id;
+
+        if (distances[location] == 99999999999)
+        {
+            cout << classCode << ": -1" << endl;
+        }
+        else
+        {
+            cout << classCode << ": " << distances[location] << endl;
+        }
+    }
+}
+
+void CampusCompass::printStudentZone(const int &student_id)
+{
+    // Get student
+    auto studentIt = students.find(student_id);
+
+    if (studentIt == students.end())
+    {
+        cout << "unsuccessful" << endl;
+        return;
+    }
+
+    Student &student = studentIt->second;
+
+    // Store parent relationships from Dijkstra
+    unordered_map<int, int> parent;
+
+    // Run Dijkstra from residence
+    unordered_map<int, int> distances = dijkstraWithParent(student.residence_id, parent);
+
+    // Stores all vertices that appear in shortest paths
+    unordered_set<int> zoneNodes;
+
+    // Residence is always included
+    zoneNodes.insert(student.residence_id);
+
+    // Find every shortest path from residence to classes
+    for (string classCode : student.classes)
+    {
+        int classLocation =
+            classes[classCode].location_id;
+
+        // If class is unreachable, skip
+        if (distances[classLocation] == INT_MAX)
+        {
+            continue;
+        }
+
+        vector<int> path = getPath(student.residence_id, classLocation, parent);
+
+        // Add all path nodes to the zone
+        for (int node : path)
+        {
+            zoneNodes.insert(node);
+        }
+    }
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+
+    unordered_set<int> visited;
+
+    int totalCost = 0;
+
+    // Start at student's residence
+    pq.push({0, student.residence_id});
+
+    while (!pq.empty())
+    {
+        int currentWeight = pq.top().first;
+        int currentNode = pq.top().second;
+
+        pq.pop();
+
+        // Already included in MST
+        if (visited.count(currentNode))
+        {
+            continue;
+        }
+
+        visited.insert(currentNode);
+        totalCost += currentWeight;
+
+        // Explore edges
+        for (const Edge &edge : adjList[currentNode])
+        {
+            // Ignore closed edges
+            if (!edge.isOpen)
+            {
+                continue;
+            }
+
+            // Only use nodes inside our subgraph
+            if (zoneNodes.find(edge.to) == zoneNodes.end())
+            {
+                continue;
+            }
+
+            // Add possible MST edge
+            if (!visited.count(edge.to))
+            {
+                pq.push({edge.weight, edge.to});
+            }
+        }
+    }
+
+    cout << "Student Zone Cost For " << student.name << ": " << totalCost << endl;
 }

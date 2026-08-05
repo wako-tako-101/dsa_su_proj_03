@@ -28,6 +28,7 @@ private:
     unordered_map<int, Student> students;
     unordered_map<int, vector<Edge>> adjList; //adj list of graph with: Connectedness = O(V) | Adjacency = O(V) | Space = O(V + E)
     unordered_map<string, ClassData> classes; // maps class name to class details
+    unordered_map<int,int> dijkstra(int start, unordered_map<int,int>& parent);
 
 public:
     // Think about what helper functions you will need in the algorithm
@@ -44,6 +45,9 @@ public:
     bool toggleEdgesClosure(const vector<pair<int, int>> &edges);
     string checkEdgeStatus(int location1, int location2);
     bool isConnected(int location1, int location2);
+
+    unordered_map<int, int> dijkstraWithParent(int start, unordered_map<int, int> &parent);
+    vector<int> getPath(int start, int end, const unordered_map<int, int> &parent);
 
     //Print public methods
     void printShortestEdges(const int& student_id);
