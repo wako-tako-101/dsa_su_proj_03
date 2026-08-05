@@ -100,12 +100,14 @@ bool CampusCompass::ParseCommand(const string &command) {
 
         if(nameStart == string::npos) {
             is_valid = false; // Invalid command format
+            cout << "unsuccessful" << endl;
         } else {
             size_t nameStart1 = nameStart + 1;
             size_t nameEnd = command.find('"', nameStart + 1);
 
             if(nameEnd == string::npos) {
                 is_valid = false; // Invalid command format
+                cout << "unsuccessful" << endl;
             }
 
             name = command.substr(nameStart, nameEnd - nameStart);
@@ -125,6 +127,7 @@ bool CampusCompass::ParseCommand(const string &command) {
 
             if(classNames.size() != numClasses) {
                 is_valid = false; // Mismatch in number of classes
+                cout << "unsuccessful" << endl;
             }
 
             int id, residence_id;
@@ -136,14 +139,45 @@ bool CampusCompass::ParseCommand(const string &command) {
             catch(const std::exception& e)
             {
                 is_valid = false; // Invalid ID or residence ID format
+                cout << "unsuccessful" << endl;
             }
 
             if(!insertStudent(name, id, residence_id, classNames)) {
                 is_valid = false; // Insertion failed
+                cout << "unsuccessful" << endl;
             }
+            cout << "successful" << endl;
         }
     } else if(commandType == "remove") {
         // parse remove command
+        string idString;
+        ss >> idString;
+
+        if(ss.fail())
+        {
+            cout << "unsuccessful" << endl;
+            return false;
+        }
+
+        int id;
+        try
+        {
+            id = stoi(idString);
+        }
+        catch(const std::exception& e)
+        {
+            cout << "unsuccessful" << endl;
+            return false;
+        }
+
+        if(removeStudent(id))
+        {
+            cout << "successful" << endl;
+        }
+        else
+        {
+            cout << "unsuccessful" << endl;
+        }
     } else if(commandType == "dropClass") {
         // parse dropClass command
     } else if(commandType == "replaceClass") {
@@ -205,4 +239,17 @@ bool CampusCompass::insertStudent(const string &name, int id, int residence_id, 
     newStudent.classes = class_names;
     students[id] = newStudent;
     return true;
+}
+
+bool CampusCompass::removeStudent(int id)
+{
+    auto s = students.find(id);
+
+    if(s != students.end()) {
+        students.erase(s);
+        return true;
+    }
+    else {
+        return false; // student with this ID does not exist
+    }
 }
