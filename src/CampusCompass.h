@@ -16,7 +16,7 @@ struct Edge {
     bool isOpen = true;
 };
 
-struct Class_Data {
+struct ClassData {
     string class_code, start, end;
     int location_id;
 };
@@ -27,7 +27,7 @@ private:
     // perhaps some graph representation?
     unordered_map<int, Student> students;
     unordered_map<int, vector<Edge>> adjList; //adj list of graph with: Connectedness = O(V) | Adjacency = O(V) | Space = O(V + E)
-    unordered_map<string, Class_Data> classes; // maps class name to class details
+    unordered_map<string, ClassData> classes; // maps class name to class details
 
 public:
     // Think about what helper functions you will need in the algorithm

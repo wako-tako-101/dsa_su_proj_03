@@ -1,9 +1,7 @@
 #include "CampusCompass.h"
-#include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
-
 
 using namespace std;
 
@@ -28,6 +26,7 @@ bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes
         cerr << "Unsuccessful: Could not open classes file" << endl;
         return false;
     }
+
 
     string line;
     getline(edges_file, line); // Skips the header line
@@ -61,11 +60,13 @@ bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes
         adjList[stoi(to)].push_back(edge2);
     }
 
+    edges_file.close();
+
     getline(classesFile, line); // Skips header
     while(getline(classesFile, line))
     {
         stringstream ss(line); // create a stringstream from the line
-        Class_Data classData;
+        ClassData classData;
         string location;
 
         getline(ss, classData.class_code, ',');
@@ -76,6 +77,9 @@ bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes
         classData.location_id = stoi(location);
         classes[classData.class_code] = classData;
     }
+
+    classesFile.close();
+
     return true;
 }
 
@@ -111,7 +115,45 @@ bool CampusCompass::ParseCommand(const string &command) {
         is_valid = false; // invalid command type
     }
 
-
-
     return is_valid;
+}
+
+bool CampusCompass::insertStudent(const string &name, int id, int residence_id, const vector<string> &class_names)
+{
+    //Student validation checks
+    string idString = to_string(id);
+    if(id <= 0 || idString.size() != 8 || name.empty()) {
+        //cout << "Unsuccessful: Invalid student ID or name" << endl;
+        return false;
+    }
+
+    if(students.find(id) != students.end()) {
+        //cout << "Unsuccessful: Student with this ID already exists" << endl;
+        return false; // student with this ID already exists
+    }
+
+    for(const string &class_code : class_names) {
+        if(classes.find(class_code) == classes.end()) {
+            //cout << "Unsuccessful: Class " << class_code << " does not exist" << endl;
+            return false; // class does not exist
+        }
+    }
+
+    if(adjList.find(residence_id) == adjList.end()) {
+        //cout << "Unsuccessful: Residence location " << residence_id << " does not exist" << endl;
+        return false; // residence location does not exist in the graph
+    }
+
+    //string studentName = name;
+    // istringstream ss(studentName); // create a stringstream from the name
+    // getline(ss, studentName, '"'); // Skip the first quote
+    // getline(ss, studentName, '"'); // Get the name between quotes
+
+    Student newStudent;
+    newStudent.name = name;
+    newStudent.id = id;
+    newStudent.residence_id = residence_id;
+    newStudent.classes = class_names;
+    students[id] = newStudent;
+    return true;
 }
