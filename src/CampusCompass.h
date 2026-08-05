@@ -41,7 +41,7 @@ public:
     bool dropClass(int id, const string &class_code);
     bool replaceClass(int id, const string &old_class_code, const string &new_class_code);
     int removeClass(const string &class_code);
-    bool toggleEdgesClosure();
+    bool toggleEdgesClosure(const vector<pair<int, int>> &edges);
     string checkEdgeStatus(int location1, int location2);
     bool isConnected(int location1, int location2);
 
