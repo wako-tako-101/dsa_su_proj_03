@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -148,6 +149,7 @@ bool CampusCompass::ParseCommand(const string &command) {
             }
             cout << "successful" << endl;
         }
+
     } else if(commandType == "remove") {
         // parse remove command
         string idString;
@@ -156,6 +158,7 @@ bool CampusCompass::ParseCommand(const string &command) {
         if(ss.fail())
         {
             cout << "unsuccessful" << endl;
+            is_valid = false;
             return false;
         }
 
@@ -166,6 +169,7 @@ bool CampusCompass::ParseCommand(const string &command) {
         }
         catch(const std::exception& e)
         {
+            is_valid = false; // Invalid ID format
             cout << "unsuccessful" << endl;
             return false;
         }
@@ -176,14 +180,80 @@ bool CampusCompass::ParseCommand(const string &command) {
         }
         else
         {
+            is_valid = false;
             cout << "unsuccessful" << endl;
         }
+
     } else if(commandType == "dropClass") {
         // parse dropClass command
+        string idString, classCode;
+        ss >> idString >> classCode;
+
+        if(ss.fail())
+        {
+            cout << "unsuccessful" << endl;
+            is_valid = false;
+            return false;
+        }
+
+        int id = stoi(idString);
+        if(dropClass(id, classCode))
+        {
+            cout << "successful" << endl;
+        }
+        else
+        {
+            is_valid = false;
+            cout << "unsuccessful" << endl;
+        }
+
     } else if(commandType == "replaceClass") {
         // parse replaceClass command
+        string idString, oldClassCode, newClassCode;
+        ss >> idString >> oldClassCode >> newClassCode;
+
+        if(ss.fail())
+        {
+            cout << "unsuccessful" << endl;
+            is_valid = false;
+            return false;
+        }
+
+        int id = stoi(idString);
+
+        if(replaceClass(id, oldClassCode, newClassCode))
+        {
+            cout << "successful" << endl;
+        }
+        else
+        {
+            is_valid = false;
+            cout << "unsuccessful" << endl;
+        }
+
     } else if(commandType == "removeClass") {
         // parse removeClass command
+        string classCode;
+        ss >> classCode;
+
+        if(ss.fail())
+        {
+            cout << "unsuccessful" << endl;
+            is_valid = false;
+            return false;
+        }
+
+        int removedCount = removeClass(classCode);
+
+        if(removedCount == -1)
+        {
+            is_valid = false;
+            cout << "unsuccessful" << endl;
+        }
+        else
+        {
+            cout << removedCount << endl;
+        }
     } else if(commandType == "toggleEdgesClosure") {
         // parse toggleEdgesClosure command
     } else if(commandType == "checkEdgeStatus") {
@@ -252,4 +322,116 @@ bool CampusCompass::removeStudent(int id)
     else {
         return false; // student with this ID does not exist
     }
+}
+
+bool CampusCompass::dropClass(int id, const string &class_code)
+{
+    auto student = students.find(id);
+    if(student == students.end()) {
+        return false; // student with this ID does not exist
+    }
+
+    vector<string> &studentClasses = student->second.classes;
+    auto classIt = find(studentClasses.begin(), studentClasses.end(), class_code);
+
+    if(classIt != studentClasses.end()) {
+        studentClasses.erase(classIt);
+    }
+    else {
+        return false; // student is not enrolled in the specified class
+    }
+
+    if(studentClasses.empty()) {
+        students.erase(student); // remove student if they have no classes left
+        return false; // student has no classes to drop
+    }
+    return true;
+}
+
+bool CampusCompass::replaceClass(int id, const string &old_class_code, const string &new_class_code)
+{
+    auto student = students.find(id);
+
+    // if student does not exist
+    if(student == students.end())
+    {
+        return false;
+    }
+
+    // if new class does not exist
+    if(classes.find(new_class_code) == classes.end())
+    {
+        return false;
+    }
+
+    vector<string>& studentClasses = student->second.classes;
+    bool oldClass = false;
+    bool newClass = false;
+
+    for(string code : studentClasses)
+    {
+        if(code == old_class_code)
+            oldClass = true;
+
+        if(code == new_class_code)
+            newClass = true;
+    }
+
+    // if the student does not have the old class or already has the new class, return false
+    if(!oldClass || newClass)
+    {
+        return false;
+    }
+
+    // replace the old class with the new class
+    for(string& code : studentClasses)
+    {
+        if(code == old_class_code)
+        {
+            code = new_class_code;
+            break;
+        }
+    }
+    return true;
+}
+
+int CampusCompass::removeClass(const string &class_code)
+{
+    //-1 if invalid class code, else return number of students that were removed from the class
+    if(classes.find(class_code) == classes.end())
+    {
+        return -1; // class does not exist
+    }
+
+    int count = 0;
+    vector<int> removeStudents;
+
+    for(auto& s : students)
+    {
+        Student& student = s.second;
+
+        auto it = find(student.classes.begin(), student.classes.end(), class_code);
+        if(it != student.classes.end()) //if the student has the class, remove it
+        {
+            student.classes.erase(it);
+            count++;
+
+            if(student.classes.empty())
+            {
+                removeStudents.push_back(s.first);
+            }
+        }
+    }
+
+    for(int id : removeStudents)
+    {
+        students.erase(id);
+    }
+
+    if(count == 0)
+    {
+        return -1;
+    }
+
+    return count;
 }

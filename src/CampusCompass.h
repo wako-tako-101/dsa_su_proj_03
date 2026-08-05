@@ -40,7 +40,7 @@ public:
     bool removeStudent(int id);
     bool dropClass(int id, const string &class_code);
     bool replaceClass(int id, const string &old_class_code, const string &new_class_code);
-    bool removeClass(const string &class_code);
+    int removeClass(const string &class_code);
     bool toggleEdgesClosure();
     string checkEdgeStatus(int location1, int location2);
     bool isConnected(int location1, int location2);
