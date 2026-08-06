@@ -918,9 +918,9 @@ bool CampusCompass::verifySchedule(const int &student_id)
     }
 
     // compare class schedules and see which one starts earlier
-    for (int i = 0; i < classSchedule.size(); i++)
+    for (size_t i = 0; i < classSchedule.size(); i++)
     {
-        for (int j = i + 1; j < classSchedule.size(); j++)
+        for (size_t j = i + 1; j < classSchedule.size(); j++)
         {
             if (getTime(classSchedule[i].start) > getTime(classSchedule[j].start))
             {
@@ -931,7 +931,7 @@ bool CampusCompass::verifySchedule(const int &student_id)
 
     cout << "Schedule Check for " << student.name << ":" << endl;
 
-    for (int i = 0; i < classSchedule.size() - 1; i++)
+    for (size_t i = 0; i < classSchedule.size() - 1; i++)
     {
         //get the travel time between classes
         int travelTime = getTravelTime(classSchedule[i].location_id, classSchedule[i + 1].location_id);
