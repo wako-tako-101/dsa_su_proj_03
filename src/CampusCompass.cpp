@@ -676,7 +676,7 @@ bool CampusCompass::isConnected(int location1, int location2)
     return false;
 }
 
-unordered_map<int, int> CampusCompass::dijkstra(int start, unordered_map<int, int> &parent)
+unordered_map<int, int> CampusCompass::dijkstraWithParent(int start, unordered_map<int, int> &parent)
 {
     unordered_map<int, int> distance; // map to represent the shortest distance from the starting node to each node in the graph
 
