@@ -118,7 +118,6 @@ bool CampusCompass::ParseCommand(const string &command)
         }
         else
         {
-            size_t nameStart1 = nameStart + 1;
             size_t nameEnd = command.find('"', nameStart + 1);
 
             if (nameEnd == string::npos)
@@ -127,13 +126,13 @@ bool CampusCompass::ParseCommand(const string &command)
                 cout << "unsuccessful" << endl;
             }
 
-            name = command.substr(nameStart, nameEnd - nameStart);
+            //create a substring of the name between the quotes
+            name = command.substr(nameStart + 1, nameEnd - nameStart - 1);
             string remainingCommand = command.substr(nameEnd + 1);
-            stringstream ss(remainingCommand);
 
-            getline(ss, idString, ' ');
-            getline(ss, residenceString, ' ');
-            ss >> numClasses;
+            //parse remaining command for id, residence_id, and number of classes
+            stringstream ss(remainingCommand);
+            ss >> idString >> residenceString >> numClasses;
 
             vector<string> classNames;
             for (int i = 0; i < numClasses; ++i)
@@ -143,12 +142,14 @@ bool CampusCompass::ParseCommand(const string &command)
                 classNames.push_back(className);
             }
 
+            //check if the number of classes matches the expected number
             if (classNames.size() != numClasses)
             {
                 is_valid = false; // Mismatch in number of classes
                 cout << "unsuccessful" << endl;
             }
 
+            //try to convert idString and residenceString to integers
             int id, residence_id;
             try
             {
@@ -161,11 +162,14 @@ bool CampusCompass::ParseCommand(const string &command)
                 cout << "unsuccessful" << endl;
             }
 
+            //check if the student can be inserted
             if (!insertStudent(name, id, residence_id, classNames))
             {
                 is_valid = false; // Insertion failed
                 cout << "unsuccessful" << endl;
+                return false;
             }
+            
             cout << "successful" << endl;
         }
     }
@@ -338,7 +342,7 @@ bool CampusCompass::ParseCommand(const string &command)
             is_valid = false;
             return false;
         }
-        cout << (isConnected(location1, location2) ? "yes" : "no") << endl;
+        cout << (isConnected(location1, location2) ? "successful" : "unsuccessful") << endl;
     }
 
     else if (commandType == "printShortestEdges")
@@ -359,42 +363,59 @@ bool CampusCompass::ParseCommand(const string &command)
     else if (commandType == "printStudentZone")
     {
         // parse printStudentZone command
+        string idString;
 
+        ss >> idString;
+
+        if (ss.fail())
+        {
+            cout << "unsuccessful" << endl;
+            return false;
+        }
+
+        int id;
+
+        try
+        {
+            id = stoi(idString);
+        }
+        catch (const std::exception &e)
+        {
+            cout << "unsuccessful" << endl;
+            return false;
+        }
+
+        // Make sure student exists
+        if (students.find(id) == students.end())
+        {
+            cout << "unsuccessful" << endl;
+            return false;
+        }
+
+        printStudentZone(id);
     }
     else if (commandType == "verifySchedule")
     {
         // parse verifySchedule command
-    string idString;
+        int id;
+        ss >> id;
 
-    ss >> idString;
+        if (ss.fail())
+        {
+            cout << "unsuccessful" << endl;
+            is_valid = false;
+            return false;
+        }
 
-
-    if(ss.fail())
-    {
-        cout << "unsuccessful" << endl;
-        return false;
-    }
-
-    int id;
-
-    try
-    {
-        id = stoi(idString);
-    }
-    catch(const std::exception &e)
-    {
-        cout << "unsuccessful" << endl;
-        return false;
-    }
-
-    // Make sure student exists
-    if(students.find(id) == students.end())
-    {
-        cout << "unsuccessful" << endl;
-        return false;
-    }
-
-    printStudentZone(id);
+        if (verifySchedule(id))
+        {
+            cout << "successful" << endl;
+        }
+        else
+        {
+            cout << "unsuccessful" << endl;
+            is_valid = false;
+        }
     }
     else
     {
@@ -747,7 +768,14 @@ vector<int> CampusCompass::getPath(int start, int end, const unordered_map<int, 
 
 void CampusCompass::printShortestEdges(const int &student_id)
 {
-    Student student = students[student_id];
+    auto studentIter = students.find(student_id);
+    if (studentIter == students.end())
+    {
+        cout << "unsuccessful" << endl;
+        return;
+    }
+
+    Student &student = studentIter->second;
     unordered_map<int, int> parent;
 
     cout << "Time For Shortest Edges: " << student.name << endl;
@@ -774,15 +802,15 @@ void CampusCompass::printShortestEdges(const int &student_id)
 void CampusCompass::printStudentZone(const int &student_id)
 {
     // Get student
-    auto studentIt = students.find(student_id);
+    auto studentIter = students.find(student_id);
 
-    if (studentIt == students.end())
+    if (studentIter == students.end())
     {
         cout << "unsuccessful" << endl;
         return;
     }
 
-    Student &student = studentIt->second;
+    Student &student = studentIter->second;
 
     // Store parent relationships from Dijkstra
     unordered_map<int, int> parent;
