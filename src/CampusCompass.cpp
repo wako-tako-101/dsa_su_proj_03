@@ -129,20 +129,33 @@ bool CampusCompass::ParseCommand(const string &command)
             stringstream ss(remainingCommand);
             ss >> idString >> residenceString >> numClasses;
 
+            if(numClasses < 1 || numClasses > 6)
+            {
+                cout << "unsuccessful" << endl;
+                is_valid = false;
+                return false;
+            }
+
             vector<string> classNames;
             for (int i = 0; i < numClasses; ++i)
             {
                 string className;
-                ss >> className;
+                if(!(ss >> className))
+                {
+                    cout << "unsuccessful" << endl;
+                    is_valid = false;
+                    return false;
+                }
+                
                 classNames.push_back(className);
             }
 
             // check if the number of classes matches the expected number
-            //  if (classNames.size() != numClasses)
-            //  {
-            //      is_valid = false; // Mismatch in number of classes
-            //      cout << "unsuccessful" << endl;
-            //  }
+             if (classNames.size() != numClasses)
+             {
+                 is_valid = false; // Mismatch in number of classes
+                 cout << "unsuccessful" << endl;
+             }
 
             // try to convert idString and residenceString to integers
             if(idString.size() != 8)
@@ -419,7 +432,10 @@ bool CampusCompass::ParseCommand(const string &command)
             return false;
         }
 
-        verifySchedule(id);
+        if(!verifySchedule(id))
+        {
+            cout << "unsuccessful" << endl;
+        }
     }
     else
     {
