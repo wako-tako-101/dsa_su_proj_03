@@ -9,13 +9,7 @@
 
 using namespace std;
 
-CampusCompass::CampusCompass()
-{
-    // initialize your object
-    students.clear();
-    adjList.clear();
-    classes.clear();
-}
+CampusCompass::CampusCompass() = default;
 
 bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes_filepath)
 {
@@ -126,11 +120,11 @@ bool CampusCompass::ParseCommand(const string &command)
                 cout << "unsuccessful" << endl;
             }
 
-            //create a substring of the name between the quotes
+            // create a substring of the name between the quotes
             name = command.substr(nameStart + 1, nameEnd - nameStart - 1);
             string remainingCommand = command.substr(nameEnd + 1);
 
-            //parse remaining command for id, residence_id, and number of classes
+            // parse remaining command for id, residence_id, and number of classes
             stringstream ss(remainingCommand);
             ss >> idString >> residenceString >> numClasses;
 
@@ -142,14 +136,14 @@ bool CampusCompass::ParseCommand(const string &command)
                 classNames.push_back(className);
             }
 
-            //check if the number of classes matches the expected number
-            if (classNames.size() != numClasses)
-            {
-                is_valid = false; // Mismatch in number of classes
-                cout << "unsuccessful" << endl;
-            }
+            // check if the number of classes matches the expected number
+            //  if (classNames.size() != numClasses)
+            //  {
+            //      is_valid = false; // Mismatch in number of classes
+            //      cout << "unsuccessful" << endl;
+            //  }
 
-            //try to convert idString and residenceString to integers
+            // try to convert idString and residenceString to integers
             int id, residence_id;
             try
             {
@@ -162,14 +156,14 @@ bool CampusCompass::ParseCommand(const string &command)
                 cout << "unsuccessful" << endl;
             }
 
-            //check if the student can be inserted
+            // check if the student can be inserted
             if (!insertStudent(name, id, residence_id, classNames))
             {
                 is_valid = false; // Insertion failed
                 cout << "unsuccessful" << endl;
                 return false;
             }
-            
+
             cout << "successful" << endl;
         }
     }
@@ -508,7 +502,7 @@ bool CampusCompass::dropClass(int id, const string &class_code)
     if (studentClasses.empty())
     {
         students.erase(student); // remove student if they have no classes left
-        return false;            // student has no classes to drop
+        return true;
     }
     return true;
 }
@@ -616,7 +610,6 @@ bool CampusCompass::toggleEdgesClosure(const vector<pair<int, int>> &edges)
             {
                 edge.isOpen = !edge.isOpen;
                 found = true;
-                break;
             }
         }
 
@@ -626,7 +619,7 @@ bool CampusCompass::toggleEdgesClosure(const vector<pair<int, int>> &edges)
             if (edge.to == from) // if the edge exists, toggle its isOpen status
             {
                 edge.isOpen = !edge.isOpen;
-                break;
+                found = true;
             }
         }
 
@@ -831,7 +824,7 @@ void CampusCompass::printStudentZone(const int &student_id)
             classes[classCode].location_id;
 
         // If class is unreachable, skip
-        if (distances[classLocation] == INT_MAX)
+        if (distances[classLocation] == INT_MAX || distances.find(classLocation) == distances.end())
         {
             continue;
         }
@@ -893,4 +886,102 @@ void CampusCompass::printStudentZone(const int &student_id)
     }
 
     cout << "Student Zone Cost For " << student.name << ": " << totalCost << endl;
+}
+
+bool CampusCompass::verifySchedule(const int &student_id)
+{
+    if (students.find(student_id) == students.end())
+    {
+        return false; // student with this ID does not exist
+    }
+
+    const Student &student = students.at(student_id);
+
+    // if a student only has 1 class, return false
+    if (student.classes.size() <= 1)
+    {
+        return false;
+    }
+
+    // Check if all classes in the student's schedule exist
+    vector<ClassData> classSchedule;
+    for (const string &classCode : student.classes)
+    {
+        if (classes.find(classCode) == classes.end())
+        {
+            return false; // Class does not exist
+        }
+        else
+        {
+            classSchedule.push_back(classes[classCode]);
+        }
+    }
+
+    // compare class schedules and see which one starts earlier
+    for (int i = 0; i < classSchedule.size(); i++)
+    {
+        for (int j = i + 1; j < classSchedule.size(); j++)
+        {
+            if (getTime(classSchedule[i].start) > getTime(classSchedule[j].start))
+            {
+                swap(classSchedule[i], classSchedule[j]);
+            }
+        }
+    }
+
+    cout << "Schedule Check for " << student.name << ":" << endl;
+
+    for (int i = 0; i < classSchedule.size() - 1; i++)
+    {
+        //get the travel time between classes
+        int travelTime = getTravelTime(classSchedule[i].location_id, classSchedule[i + 1].location_id);
+
+        //get the time between the start of the next class and the end of the current one
+        int timeGap = getTime(classSchedule[i + 1].start) - getTime(classSchedule[i].end);
+
+        cout << classSchedule[i].class_code << " - " << classSchedule[i + 1].class_code << ": ";
+
+        //check if it is possible for the student to make it to class on time
+        if (travelTime != -1 && timeGap >= travelTime)
+        {
+            cout << "successful";
+        }
+        else
+        {
+            cout << "unsuccessful";
+        }
+        cout << endl;
+    }
+
+    return true;
+}
+
+int CampusCompass::getTime(string time)
+{
+    int hour, minute;
+    try
+    {
+        hour = stoi(time.substr(0, 2));
+        minute = stoi(time.substr(3, 2));
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+
+    // convert to minutes
+    return hour * 60 + minute;
+}
+
+int CampusCompass::getTravelTime(int start, int end)
+{
+    unordered_map<int, int> parent;
+    unordered_map<int, int> distances = dijkstraWithParent(start, parent);
+
+    if (distances.find(end) == distances.end() || distances[end] == INT_MAX)
+    {
+        return -1;
+    }
+
+    return distances[end];
 }

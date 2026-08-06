@@ -55,4 +55,7 @@ public:
 
     //Verification public methods
     bool verifySchedule(const int& student_id);
+    int getTime(string time);
+    int getTimeDifference(string start, string end);
+    int getTravelTime(int start, int end);
 };
