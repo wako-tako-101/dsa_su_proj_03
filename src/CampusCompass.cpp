@@ -419,15 +419,7 @@ bool CampusCompass::ParseCommand(const string &command)
             return false;
         }
 
-        if (verifySchedule(id))
-        {
-            cout << "successful" << endl;
-        }
-        else
-        {
-            cout << "unsuccessful" << endl;
-            is_valid = false;
-        }
+        verifySchedule(id);
     }
     else
     {
