@@ -441,7 +441,7 @@ bool CampusCompass::insertStudent(const string &name, int id, int residence_id, 
 {
     // Student validation checks
     string idString = to_string(id);
-    if (id <= 0 || idString.size() != 8 || name.empty())
+    if (id <= 0 || name.empty())
     {
         // cout << "Unsuccessful: Invalid student ID or name" << endl;
         return false;
