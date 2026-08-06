@@ -5,12 +5,16 @@
 #include <algorithm>
 #include <queue>
 #include <unordered_set>
+#include <climits>
 
 using namespace std;
 
 CampusCompass::CampusCompass()
 {
     // initialize your object
+    students.clear();
+    adjList.clear();
+    classes.clear();
 }
 
 bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes_filepath)
@@ -679,7 +683,7 @@ unordered_map<int, int> CampusCompass::dijkstra(int start, unordered_map<int, in
     // Initialize all distances
     for (auto &node : adjList)
     {
-        distance[node.first] = 99999999999;
+        distance[node.first] = INT_MAX; // set initial distance to "infinity"
     }
 
     // Distance to starting node
@@ -756,7 +760,7 @@ void CampusCompass::printShortestEdges(const int &student_id)
     {
         int location = classes[classCode].location_id;
 
-        if (distances[location] == 99999999999)
+        if (distances[location] == INT_MAX)
         {
             cout << classCode << ": -1" << endl;
         }
@@ -799,7 +803,7 @@ void CampusCompass::printStudentZone(const int &student_id)
             classes[classCode].location_id;
 
         // If class is unreachable, skip
-        if (distances[classLocation] == 99999999999)
+        if (distances[classLocation] == INT_MAX)
         {
             continue;
         }
