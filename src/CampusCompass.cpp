@@ -96,7 +96,7 @@ bool CampusCompass::ParseCommand(const string &command)
 
     // Extract command type from the command string
     stringstream ss(command);
-    getline(ss, commandType, ' ');
+    ss >> commandType;
 
     if (commandType == "insert")
     {
@@ -146,7 +146,7 @@ bool CampusCompass::ParseCommand(const string &command)
                     is_valid = false;
                     return false;
                 }
-                
+
                 classNames.push_back(className);
             }
 
@@ -440,6 +440,8 @@ bool CampusCompass::ParseCommand(const string &command)
     else
     {
         is_valid = false; // invalid command type
+        cout << "unsuccessful" << endl;
+        return false;
     }
 
     return is_valid;
