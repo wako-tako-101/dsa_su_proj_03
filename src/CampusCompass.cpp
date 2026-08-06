@@ -6,6 +6,7 @@
 #include <queue>
 #include <unordered_set>
 #include <climits>
+#include <cctype>
 
 using namespace std;
 
@@ -144,6 +145,23 @@ bool CampusCompass::ParseCommand(const string &command)
             //  }
 
             // try to convert idString and residenceString to integers
+            if(idString.size() != 8)
+            {
+                cout << "unsuccessful" << endl;
+                is_valid = false;
+                return false;
+            }
+
+            for(const char& c : idString)
+            {
+                if(!isdigit(c))
+                {
+                    cout << "unsuccessful" << endl;
+                    is_valid = false;
+                    return false;
+                }
+            }
+
             int id, residence_id;
             try
             {
@@ -427,6 +445,14 @@ bool CampusCompass::insertStudent(const string &name, int id, int residence_id, 
     {
         // cout << "Unsuccessful: Invalid student ID or name" << endl;
         return false;
+    }
+
+    for(const char& c : name)
+    {
+        if(!isalpha(c) && c!= ' ')
+        {
+            return false;
+        }
     }
 
     if (students.find(id) != students.end())
